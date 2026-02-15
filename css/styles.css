@@ -1,0 +1,37 @@
+/* Estilos generales para la aplicación de dieta */
+
+.view {
+  min-height: 50vh;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: .5rem;
+}
+
+.day-cell {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: .5rem;
+  padding: .5rem;
+  min-height: 92px;
+  cursor: pointer;
+}
+
+.day-cell:hover {
+  border-color: rgba(0,0,0,.25);
+}
+
+.day-num {
+  font-weight: 600;
+}
+
+.badge-meal {
+  font-size: .7rem;
+}
+
+.small-muted {
+  color: #6c757d;
+  font-size: .85rem;
+}
