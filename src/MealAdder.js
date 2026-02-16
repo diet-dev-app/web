@@ -17,7 +17,7 @@ export class MealAdder {
         <div class="mb-3">
           <label for="${selectId}" class="form-label">Select an option for ${mealType}</label>
           <select class="form-select" id="${selectId}">
-            ${options.map(o => `<option value="${o.name}">${o.name}</option>`).join("")}
+            ${options.map(o => `<option value="${o.id}">${o.name}${o.notes ? ' — ' + o.notes : ''}</option>`).join("")}
           </select>
         </div>
       </form>
@@ -27,8 +27,10 @@ export class MealAdder {
       body: modalBody,
       buttons: [
         { label: "Add", class: "btn-primary", onClick: () => {
-            const value = document.getElementById(selectId).value;
-            onAdd(value);
+            const select = document.getElementById(selectId);
+            const value = select.value;
+            const selectedOption = options.find(o => String(o.id) === value);
+            onAdd(selectedOption);
             this.modal.hide();
           }
         },

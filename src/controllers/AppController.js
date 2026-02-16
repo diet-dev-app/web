@@ -3,6 +3,7 @@
 
 import { HELP_TEXT, SHOPPING, DEFAULT_OPTIONS, MEALS } from "../data.js";
 import { loadState, saveState, resetAll, exportJSON, importJSON } from "../storage.js";
+import { ApiService } from "../services/ApiService.js";
 import { MealAdder } from "../MealAdder.js";
 import { ReusableModal } from "../ReusableModal.js";
 import { MealController } from "./MealController.js";
@@ -14,11 +15,21 @@ import { OptionsController } from "./OptionsController.js";
 export class AppController {
   constructor() {
     console.log('[AppController] Constructor called');
+    this.api = new ApiService();
     this.state = loadState();
-    if (!this.state.options) {
-      this.state.options = structuredClone(DEFAULT_OPTIONS);
-      saveState(this.state);
-    }
+    this.initFromApi();
+    // Patch: always sync state with API after local changes
+    this.syncStateToApi = async () => {
+      try {
+        // Save log and notes to API (if endpoint exists)
+        if (this.api && this.state.log) {
+          await this.api.addMeal({ log: this.state.log, notes: this.state.notes });
+        }
+      } catch (e) {
+        console.error('[AppController] Error syncing state to API:', e);
+      }
+    };
+
     this.el = (id) => document.getElementById(id);
     this.views = ["calendar", "table", "meals", "help", "options"].reduce((acc, v) => {
       acc[v] = this.el(`view-${v}`);
@@ -57,6 +68,29 @@ export class AppController {
         this.routeController.setHash(view);
         this.switchView(view);
       });
+    }
+  }
+
+  async initFromApi() {
+    try {
+      // Load meal options from API
+      const options = await this.api.getMealOptions();
+      if (options) {
+        this.state.options = options;
+        saveState(this.state);
+      }
+      // Load meals (log) from API
+      const meals = await this.api.getMeals();
+      if (meals) {
+        this.state.log = meals.log || {};
+        this.state.notes = meals.notes || {};
+        saveState(this.state);
+      }
+      // Optionally, re-render current view after loading
+      this.render(this.routeController?.getCurrentView?.() || 'calendar');
+    } catch (e) {
+      this.setAlert('Error loading data from server', 'danger');
+      console.error('[AppController] API load error:', e);
     }
   }
 
@@ -200,21 +234,41 @@ export class AppController {
       `).join("")}
     `;
     this.dayEditor.querySelectorAll("[data-add]").forEach(btn => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const meal = btn.dataset.add;
-        const choices = this.state.options[meal] || [];
-        this.mealAdder.show(dateStr, meal, choices, (selected) => {
-          this.mealController.addMeal(dateStr, meal, selected);
+        let choices = [];
+        try {
+          const opts = await this.api.getMealOptions();
+          // opts is now an array, group by meal_time
+          if (Array.isArray(opts)) {
+            choices = opts.filter(o => o.meal_time && o.meal_time.name === meal).map(o => ({
+              id: o.id,
+              name: o.name,
+              notes: o.description,
+              meal_time: o.meal_time
+            }));
+          } else if (opts && opts[meal]) {
+            choices = opts[meal];
+          } else {
+            choices = this.state.options[meal] || [];
+          }
+        } catch (e) {
+          choices = this.state.options[meal] || [];
+        }
+        this.mealAdder.show(dateStr, meal, choices, (selectedOption) => {
+          console.log(selectedOption);
+          this.mealController.addMeal(dateStr, meal, selectedOption);
           const chipsDiv = this.dayEditor.querySelector(`#chips-${meal}`);
           if (chipsDiv) {
             chipsDiv.innerHTML = (this.state.log[dateStr][meal] || []).map((item, idx) => `
               <span class="badge text-bg-dark">
-                ${item}
+                ${item.name}
                 <button class="btn btn-sm btn-link link-light p-0 ms-2" data-del="${meal}" data-idx="${idx}" aria-label="Delete">×</button>
               </span>
             `).join("") || `<span class="small-muted">No record</span>`;
             chipsDiv.querySelectorAll("[data-del]").forEach(delBtn => {
               delBtn.addEventListener("click", () => {
+                console.log(`Delete clicked for meal: ${meal}, idx: ${selectedOption.id}`);
                 const idx = Number(delBtn.dataset.idx);
                 this.mealController.removeMeal(dateStr, meal, idx);
                 chipsDiv.innerHTML = (this.state.log[dateStr][meal] || []).map((item, idx) => `

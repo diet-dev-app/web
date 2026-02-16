@@ -1,23 +1,49 @@
-// OptionsController.js
-// Controller for rendering and managing meal options
 import { MEALS, DEFAULT_OPTIONS } from "../data.js";
 import { saveState } from "../storage.js";
+import { ApiService } from "../services/ApiService.js";
 
 export class OptionsController {
   constructor(state, setAlert) {
     this.state = state;
     this.setAlert = setAlert;
+    this.api = new ApiService();
   }
 
-  renderOptionsView(container) {
+  async renderOptionsView(container) {
+    // Fetch options from API and group by meal_time.name
+    let apiOptions = [];
+    try {
+      apiOptions = await this.api.getMealOptions();
+    } catch (e) {
+      this.setAlert('Error loading options from server', 'danger');
+      apiOptions = [];
+    }
+    // Group by meal_time.name
+    const grouped = {};
+    for (const opt of apiOptions) {
+      const key = opt.meal_time?.name;
+      if (!key) continue;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push({
+        id: opt.id,
+        name: opt.name,
+        notes: opt.description,
+        meal_time: opt.meal_time
+      });
+    }
+    this.state.options = grouped;
+    saveState(this.state);
+
+    // Only show meals with options
+    const mealsWithOptions = Object.keys(grouped);
     container.innerHTML = `
       <div class="row g-3">
         <div class="col-12 col-lg-4">
           <div class="list-group" id="mealList">
-            ${MEALS.map(m => `
-              <button class="list-group-item list-group-item-action" data-meal="${m.key}">
-                ${m.label}
-              </button>`).join("")}
+            ${mealsWithOptions.map(key => {
+              const label = grouped[key][0]?.meal_time?.label || key;
+              return `<button class="list-group-item list-group-item-action" data-meal="${key}">${label}</button>`;
+            }).join("")}
           </div>
         </div>
         <div class="col-12 col-lg-8">
@@ -43,9 +69,9 @@ export class OptionsController {
 
     const draw = () => {
       if (!selected) return;
-      const label = MEALS.find(x => x.key === selected)?.label || selected;
+      const label = grouped[selected]?.[0]?.meal_time?.label || selected;
       optTitle.textContent = `Options — ${label}`;
-      const list = this.state.options[selected] || [];
+      const list = grouped[selected] || [];
       optBody.innerHTML = list.length ? `
         <div class="list-group">
           ${list.map((o, i) => `
@@ -63,22 +89,35 @@ export class OptionsController {
         </div>
       ` : `<div class="text-secondary">No options. Add one.</div>`;
 
-      optBody.querySelectorAll("[data-delopt]").forEach(b => b.addEventListener("click", () => {
+      optBody.querySelectorAll("[data-delopt]").forEach(b => b.addEventListener("click", async () => {
         const i = Number(b.dataset.delopt);
-        this.state.options[selected].splice(i, 1);
+        const removed = grouped[selected].splice(i, 1)[0];
         saveState(this.state);
         draw();
+        // Sync with API
+        try {
+          await this.api.deleteMealOption(selected, removed.id || i);
+        } catch (e) {
+          console.error('[OptionsController] Error deleting option:', e);
+        }
       }));
 
-      optBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => {
+      optBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", async () => {
         const i = Number(b.dataset.edit);
-        const cur = this.state.options[selected][i];
+        const cur = grouped[selected][i];
         const name = prompt("Name", cur.name);
         if (!name) return;
         const notes = prompt("Notes (optional)", cur.notes || "") ?? cur.notes;
-        this.state.options[selected][i] = { name: name.trim(), notes: (notes || "").trim() };
+        const updated = { ...cur, name: name.trim(), notes: (notes || "").trim() };
+        grouped[selected][i] = updated;
         saveState(this.state);
         draw();
+        // Sync with API
+        try {
+          await this.api.updateMealOption(selected, updated.id || i, updated);
+        } catch (e) {
+          console.error('[OptionsController] Error updating option:', e);
+        }
       }));
     };
 
@@ -91,14 +130,22 @@ export class OptionsController {
       });
     });
 
-    addOptBtn.addEventListener("click", () => {
+    addOptBtn.addEventListener("click", async () => {
       if (!selected) return this.setAlert("Select a meal first.", "warning");
       const name = prompt("Option name");
       if (!name) return;
       const notes = prompt("Notes (optional)") || "";
-      this.state.options[selected].push({ name: name.trim(), notes: notes.trim() });
+      const newOpt = { name: name.trim(), notes: notes.trim() };
+      if (!grouped[selected]) grouped[selected] = [];
+      grouped[selected].push(newOpt);
       saveState(this.state);
       draw();
+      // Sync with API
+      try {
+        await this.api.addMealOption(selected, newOpt);
+      } catch (e) {
+        console.error('[OptionsController] Error adding option:', e);
+      }
     });
 
     // Allow highlight from meals view

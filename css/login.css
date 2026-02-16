@@ -1,0 +1,30 @@
+/* styles for login view */
+#loginViewContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2000;
+}
+.login-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+#registerViewContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2000;
+}
+.register-container {
+  width: 100%;
+  max-width: 400px;
+}

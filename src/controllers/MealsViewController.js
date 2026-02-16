@@ -1,13 +1,36 @@
-// MealsViewController.js
-// Controller for rendering the meals view
 import { MEALS } from "../data.js";
+import { ApiService } from "../services/ApiService.js";
 
 export class MealsViewController {
   constructor(state) {
     this.state = state;
+    this.api = new ApiService();
   }
 
-  renderMealsView(container, highlightMealCallback) {
+  async renderMealsView(container, highlightMealCallback) {
+    // Fetch latest options from API
+    let options = this.state.options;
+    try {
+      const apiOptions = await this.api.getMealOptions();
+      if (Array.isArray(apiOptions)) {
+        // Group by meal_time
+        options = {};
+        for (const opt of apiOptions) {
+          const key = opt.meal_time?.name;
+          if (!key) continue;
+          if (!options[key]) options[key] = [];
+          options[key].push({
+            id: opt.id,
+            name: opt.name,
+            notes: opt.description,
+            meal_time: opt.meal_time
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[MealsViewController] Error fetching options from API:', e);
+    }
+
     container.innerHTML = `
       <div class="row g-3">
         ${MEALS.map(m => `
@@ -20,7 +43,7 @@ export class MealsViewController {
               <div class="card-body">
                 <div class="small-muted mb-2">Available options (editable):</div>
                 <ul class="mb-0">
-                  ${(this.state.options[m.key] || []).slice(0, 6).map(o => `<li>${this.escapeHtml(o.name)}</li>`).join("") || "<li>—</li>"}
+                  ${(options[m.key] || []).slice(0, 6).map(o => `<li>${this.escapeHtml(o.name)}${o.notes ? ' — ' + this.escapeHtml(o.notes) : ''}</li>`).join("") || "<li>\u2014</li>"}
                 </ul>
               </div>
             </div>

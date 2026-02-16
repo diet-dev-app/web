@@ -90,7 +90,8 @@ For every new functionality enhancement, agents must:
 
 - **plan-api-symfony.md**: Plan para crear una API ligera en PHP (Symfony) bajo `/api`, con endpoints para autenticación, gestión de usuarios y comidas, usando JWT y estructura mínima. Documentado en `docs/plan-api-symfony.md` y `plans/plan-api-symfony.md`.
 
-See `docs/action-plan.md` and `docs/plan-api-symfony.md` for the current standard action plans for refactoring, UI improvements, and API backend.
+
+See `docs/action-plan.md`, `docs/plan-api-symfony.md`, and `docs/plan-migracion-react.md` for the current standard action plans for refactoring, UI improvements, API backend, and React migration.
 
 ---
 

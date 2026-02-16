@@ -2,8 +2,7 @@
 
 ## Overview
 
-Diet App is a web application designed to help users manage their diet by tracking meals, users, and related data. The project follows modern frontend best practices, using Object-Oriented Programming (OOP) and the Model-View-Controller (MVC) pattern for maintainability and scalability. It also includes a lightweight Symfony-based PHP API backend for advanced features and integrations.
-
+Diet App is a web application designed to help users manage their diet by tracking meals, users, and related data. The project follows modern frontend best practices, using Object-Oriented Programming (OOP) and the Model-View-Controller (MVC) pattern for maintainability and scalability. 
 ---
 
 ## Project Structure
@@ -29,7 +28,6 @@ Diet App is a web application designed to help users manage their diet by tracki
   |-- docs/                     # Documentation and action plans
   |-- plans/                    # Project plans
   |-- tests/                    # Unit and integration tests
-  |-- api/                      # Symfony PHP API backend
   |-- README.md                 # This file
 ```
 
@@ -50,7 +48,6 @@ Diet App is a web application designed to help users manage their diet by tracki
 - Data persistence using local storage and/or API.
 - Responsive and user-friendly UI.
 - Modular MVC architecture (frontend).
-- Symfony-based PHP API for advanced features (authentication, user/meal management).
 
 ---
 
@@ -58,8 +55,6 @@ Diet App is a web application designed to help users manage their diet by tracki
 
 ### Prerequisites
 - Node.js (for frontend static server, optional)
-- Docker & Docker Compose (for API backend)
-- Composer (for PHP dependencies, handled by Docker)
 
 ### 1. Clone the Repository
 
@@ -79,26 +74,9 @@ serve .
 
 Then open the provided local URL in your browser.
 
-### 3. Run the API Backend (Symfony PHP)
-
-From the `api/` directory:
-
-```
-cd api
-# Start the containers (PHP, Nginx, etc.)
-docker-compose up -d
-# Install PHP dependencies (inside the container)
-docker-compose exec php bash -c "cd app && composer install"
-```
-
-The API will be available at `http://localhost:8080/` (or as configured in `docker/nginx/conf.d/default.conf`).
-
----
-
 ## Usage
 
 - Use the web interface to add, view, and manage meals.
-- The API backend can be used for user authentication, meal management, and future mobile or external integrations.
 - See `docs/` for action plans and methodology.
 
 ---
@@ -110,10 +88,6 @@ The API will be available at `http://localhost:8080/` (or as configured in `dock
   - Modular, OOP, MVC
   - Local storage for persistence
   - Ready for API integration
-- **Backend:**
-  - Symfony PHP API (Dockerized)
-  - Endpoints for users, meals, authentication (see `docs/plan-api-symfony.md`)
-
 ---
 
 ## Documentation
