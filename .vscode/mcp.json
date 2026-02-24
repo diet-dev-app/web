@@ -1,0 +1,45 @@
+{
+	"servers": {
+		"hyper-mcp": {
+			"type": "stdio",
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"HYPER_MCP_INSECURE_SKIP_SIGNATURE=true",
+				"-e",
+				"GOOGLE_API_KEY=${input:google-api-key}",
+				"-e",
+				"GOOGLE_SEARCH_ENGINE_ID=${input:google-search-engine-id}",
+				"-v",
+				"${workspaceFolder}/.ai/hyper-mcp.yaml:/config.yaml",
+				"ghcr.io/sevir/hyper-mcp:latest",
+				"-c",
+				"/config.yaml"
+			]
+		},
+		"chrome-devtools": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"chrome-devtools-mcp@latest"
+			]
+		}
+	},
+	"inputs": [
+		{
+			"id": "google-api-key",
+			"type": "promptString",
+			"description": "Google API Key (for Google Search)",
+			"password": true
+		},
+		{
+			"id": "google-search-engine-id",
+			"type": "promptString",
+			"description": "Google Custom Search Engine ID",
+			"password": false
+		}
+	]
+}

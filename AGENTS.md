@@ -90,8 +90,17 @@ For every new functionality enhancement, agents must:
 
 - **plan-api-symfony.md**: Plan para crear una API ligera en PHP (Symfony) bajo `/api`, con endpoints para autenticación, gestión de usuarios y comidas, usando JWT y estructura mínima. Documentado en `docs/plan-api-symfony.md` y `plans/plan-api-symfony.md`.
 
+- **plan-migracion-react-detallado.md**: Detailed migration plan from Vanilla JS to React (Vite), including full component mapping, services layer design, Context-based state management, routing, file-by-file checklist, and QA guidelines. Documented en `docs/plan-migracion-react-detallado.md`.
 
-See `docs/action-plan.md`, `docs/plan-api-symfony.md`, and `docs/plan-migracion-react.md` for the current standard action plans for refactoring, UI improvements, API backend, and React migration.
+- **react-migration/ (Phased Plan — React + TypeScript)**: Complete phased migration plan from Vanilla JS to **React 18 + TypeScript + Vite**. Each phase is a self-contained document with code snippets, acceptance criteria, and file-by-file instructions. Based on `docs/api/openapi.yaml`.
+  - `plans/react-migration/00-overview.md` — Overview, tech stack, target structure, and phase index
+  - `plans/react-migration/01-foundation.md` — Vite + TS init, types, services layer, context providers, routing, utilities
+  - `plans/react-migration/02-authentication.md` — Login, register, auth guard, user dropdown, auth tests
+  - `plans/react-migration/03-core-features.md` — Calendar grid, day modal, meal adder, meals summary, options CRUD
+  - `plans/react-migration/04-secondary-features.md` — Help view, AI shopping list, user profile, export/import, table view
+  - `plans/react-migration/05-polish-and-qa.md` — Responsive design, a11y, error handling, tests, deployment, documentation
+
+See also: `docs/action-plan.md`, `docs/plan-api-symfony.md`, `docs/plan-migracion-react.md`.
 
 ---
 

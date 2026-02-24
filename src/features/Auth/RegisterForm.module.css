@@ -1,0 +1,13 @@
+.registerCard {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.registerCard .card {
+  border: none;
+  border-radius: 12px;
+}
+
+.registerCard h2 {
+  font-size: 1.8rem;
+}
