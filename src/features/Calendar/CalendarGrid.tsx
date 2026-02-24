@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useMeals } from '@/context/MealContext';
 import { useCalendar } from './useCalendar';
 import DayCell from './DayCell';
-import styles from './CalendarGrid.module.css';
 
 interface CalendarGridProps {
   onDayClick: (date: string) => void;
@@ -24,34 +23,45 @@ export default function CalendarGrid({ onDayClick }: CalendarGridProps) {
   }, [fetchMeals]);
 
   return (
-    <div className={styles.calendar}>
+    <div className="max-w-4xl mx-auto">
       {/* Navigation header */}
-      <div className={styles.header}>
-        <button className="btn btn-outline-secondary btn-sm" onClick={goToPrevMonth}>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+          onClick={goToPrevMonth}
+          aria-label="Mes anterior"
+        >
           ◀
         </button>
-        <h4 className={styles.monthTitle}>
+        <h4 className="flex items-center gap-2 text-xl font-semibold text-slate-900 m-0">
           {monthLabel}
-          <button className="btn btn-link btn-sm ms-2" onClick={goToToday}>
+          <button
+            className="text-green-600 hover:text-green-700 text-sm font-normal underline-offset-2 hover:underline transition-colors"
+            onClick={goToToday}
+          >
             Hoy
           </button>
         </h4>
-        <button className="btn btn-outline-secondary btn-sm" onClick={goToNextMonth}>
+        <button
+          className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+          onClick={goToNextMonth}
+          aria-label="Mes siguiente"
+        >
           ▶
         </button>
       </div>
 
       {/* Weekday headers */}
-      <div className={styles.weekdays}>
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((day) => (
-          <div key={day} className={styles.weekday}>
+          <div key={day} className="text-center text-xs font-semibold text-slate-500 py-1">
             {day}
           </div>
         ))}
       </div>
 
       {/* Day grid */}
-      <div className={styles.grid}>
+      <div className="grid grid-cols-7 gap-0.5">
         {days.map((day, idx) => (
           <DayCell
             key={day.date || `empty-${idx}`}

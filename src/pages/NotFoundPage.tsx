@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom';
  */
 export default function NotFoundPage() {
   return (
-    <div className="container d-flex flex-column align-items-center justify-content-center min-vh-100 text-center">
-      <h1 className="display-1">404</h1>
-      <p className="lead">Página no encontrada</p>
-      <Link to="/" className="btn btn-success mt-3">
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <h1 className="text-8xl font-bold text-slate-200">404</h1>
+      <p className="text-xl text-slate-600 mt-2 mb-6">Página no encontrada</p>
+      <Link
+        to="/"
+        className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+      >
         Volver al inicio
       </Link>
     </div>

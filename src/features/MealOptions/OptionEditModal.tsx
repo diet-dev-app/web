@@ -1,5 +1,5 @@
 import { useState, type FormEvent, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMealOptions } from '@/context/MealOptionsContext';
 import Alert from '@/components/Alert/Alert';
 import { MEAL_TIMES } from '@/utils/constants';
@@ -11,6 +11,9 @@ interface OptionEditModalProps {
   onClose: () => void;
   onSaved: () => void;
 }
+
+const inputSm = 'w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
+const inputBase = 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
 
 /**
  * Modal for creating or editing a meal option.
@@ -43,7 +46,6 @@ export default function OptionEditModal({ show, option, onClose, onSaved }: Opti
         }))
       );
     } else {
-      // Reset form for create mode
       setName('');
       setDescription('');
       setMealTimeId(1);
@@ -60,16 +62,8 @@ export default function OptionEditModal({ show, option, onClose, onSaved }: Opti
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const updateIngredient = (
-    index: number,
-    field: keyof IngredientInput,
-    value: string | number
-  ) => {
-    setIngredients(
-      ingredients.map((ing, i) =>
-        i === index ? { ...ing, [field]: value } : ing
-      )
-    );
+  const updateIngredient = (index: number, field: keyof IngredientInput, value: string | number) => {
+    setIngredients(ingredients.map((ing, i) => (i === index ? { ...ing, [field]: value } : ing)));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -105,152 +99,187 @@ export default function OptionEditModal({ show, option, onClose, onSaved }: Opti
   };
 
   return (
-    <Modal show={show} onHide={onClose} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{isEditing ? 'Editar opción' : 'Nueva opción'}</Modal.Title>
-      </Modal.Header>
-      <Form onSubmit={handleSubmit}>
-        <Modal.Body>
-          {error && <Alert type="danger" message={error} onClose={() => setError('')} />}
+    <Dialog open={show} onClose={onClose}>
+      <DialogBackdrop className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
+      <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+        <DialogPanel className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+            <DialogTitle className="text-lg font-semibold text-slate-900">
+              {isEditing ? 'Editar opción' : 'Nueva opción'}
+            </DialogTitle>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Cerrar"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-          <Row className="mb-3">
-            <Col md={8}>
-              <Form.Group>
-                <Form.Label>Nombre *</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Bol de avena con fruta"
-                  required
-                  autoFocus
-                />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group>
-                <Form.Label>Horario *</Form.Label>
-                <Form.Select
-                  value={mealTimeId}
-                  onChange={(e) => setMealTimeId(parseInt(e.target.value))}
-                >
-                  {MEAL_TIMES.map(({ id, label }) => (
-                    <option key={id} value={id}>
-                      {label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
+          {/* Form body */}
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {error && (
+                <Alert type="danger" message={error} onClose={() => setError('')} />
+              )}
 
-          <Row className="mb-3">
-            <Col md={8}>
-              <Form.Group>
-                <Form.Label>Descripción</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descripción opcional"
-                />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group>
-                <Form.Label>Calorías estimadas</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={estimatedCalories}
-                  onChange={(e) => setEstimatedCalories(e.target.value)}
-                  placeholder="kcal"
-                  min={0}
-                  step={0.1}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+              {/* Name + Meal time row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre *</label>
+                  <input
+                    type="text"
+                    className={inputBase}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Ej: Bol de avena con fruta"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Horario *</label>
+                  <select
+                    className={inputBase}
+                    value={mealTimeId}
+                    onChange={(e) => setMealTimeId(parseInt(e.target.value))}
+                  >
+                    {MEAL_TIMES.map(({ id, label }) => (
+                      <option key={id} value={id}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-          {/* Ingredients section */}
-          <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <Form.Label className="mb-0 fw-bold">Ingredientes</Form.Label>
-              <Button variant="outline-success" size="sm" onClick={addIngredient}>
-                + Ingrediente
-              </Button>
+              {/* Description + Calories row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
+                  <textarea
+                    rows={2}
+                    className={inputBase}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Descripción opcional"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Calorías estimadas</label>
+                  <input
+                    type="number"
+                    className={inputBase}
+                    value={estimatedCalories}
+                    onChange={(e) => setEstimatedCalories(e.target.value)}
+                    placeholder="kcal"
+                    min={0}
+                    step={0.1}
+                  />
+                </div>
+              </div>
+
+              {/* Ingredients section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-slate-700">Ingredientes</label>
+                  <button
+                    type="button"
+                    onClick={addIngredient}
+                    className="bg-white border border-green-300 hover:bg-green-50 text-green-700 rounded-lg px-3 py-1 text-xs font-medium transition-colors"
+                  >
+                    + Ingrediente
+                  </button>
+                </div>
+
+                {ingredients.length === 0 ? (
+                  <p className="text-slate-400 text-sm italic">Sin ingredientes. Añade uno con el botón de arriba.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {ingredients.map((ing, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5">
+                          <input
+                            type="text"
+                            className={inputSm}
+                            placeholder="Nombre ingrediente"
+                            value={ing.name}
+                            onChange={(e) => updateIngredient(idx, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="number"
+                            className={inputSm}
+                            placeholder="Cantidad"
+                            value={ing.quantity || ''}
+                            onChange={(e) => updateIngredient(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                            min={0}
+                            step={0.1}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="text"
+                            className={inputSm}
+                            placeholder="Unidad"
+                            value={ing.unit}
+                            onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => removeIngredient(idx)}
+                            className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            aria-label="Eliminar ingrediente"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {ingredients.length === 0 ? (
-              <p className="text-muted small">
-                Sin ingredientes. Añade uno con el botón de arriba.
-              </p>
-            ) : (
-              ingredients.map((ing, idx) => (
-                <Row key={idx} className="mb-2 align-items-center">
-                  <Col md={5}>
-                    <Form.Control
-                      type="text"
-                      size="sm"
-                      placeholder="Nombre ingrediente"
-                      value={ing.name}
-                      onChange={(e) => updateIngredient(idx, 'name', e.target.value)}
-                    />
-                  </Col>
-                  <Col md={3}>
-                    <Form.Control
-                      type="number"
-                      size="sm"
-                      placeholder="Cantidad"
-                      value={ing.quantity || ''}
-                      onChange={(e) =>
-                        updateIngredient(idx, 'quantity', parseFloat(e.target.value) || 0)
-                      }
-                      min={0}
-                      step={0.1}
-                    />
-                  </Col>
-                  <Col md={2}>
-                    <Form.Control
-                      type="text"
-                      size="sm"
-                      placeholder="Unidad"
-                      value={ing.unit}
-                      onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
-                    />
-                  </Col>
-                  <Col md={2}>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => removeIngredient(idx)}
-                    >
-                      ✕
-                    </Button>
-                  </Col>
-                </Row>
-              ))
-            )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="primary" type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" />
-                Guardando...
-              </>
-            ) : isEditing ? (
-              'Guardar cambios'
-            ) : (
-              'Crear opción'
-            )}
-          </Button>
-        </Modal.Footer>
-      </Form>
-    </Modal>
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Guardando...
+                  </>
+                ) : isEditing ? (
+                  'Guardar cambios'
+                ) : (
+                  'Crear opción'
+                )}
+              </button>
+            </div>
+          </form>
+        </DialogPanel>
+      </div>
+    </Dialog>
   );
 }

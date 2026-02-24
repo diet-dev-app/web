@@ -88,6 +88,8 @@ For every new functionality enhancement, agents must:
 
 ### Action Plans History
 
+- **plan-api-meal-option-ids-put.md**: Plan para añadir soporte de `meal_option_ids` en el endpoint `PUT /api/meals/{id}` del backend Symfony, de forma que se pueda reemplazar la colección completa de opciones de comida asociadas a una `Meal` existente. Incluye cambios en la entidad, el controlador, el mock-api y criterios de aceptación. Documentado en `plans/plan-api-meal-option-ids-put.md`.
+
 - **plan-api-symfony.md**: Plan para crear una API ligera en PHP (Symfony) bajo `/api`, con endpoints para autenticación, gestión de usuarios y comidas, usando JWT y estructura mínima. Documentado en `docs/plan-api-symfony.md` y `plans/plan-api-symfony.md`.
 
 - **plan-migracion-react-detallado.md**: Detailed migration plan from Vanilla JS to React (Vite), including full component mapping, services layer design, Context-based state management, routing, file-by-file checklist, and QA guidelines. Documented en `docs/plan-migracion-react-detallado.md`.
@@ -99,6 +101,9 @@ For every new functionality enhancement, agents must:
   - `plans/react-migration/03-core-features.md` — Calendar grid, day modal, meal adder, meals summary, options CRUD
   - `plans/react-migration/04-secondary-features.md` — Help view, AI shopping list, user profile, export/import, table view
   - `plans/react-migration/05-polish-and-qa.md` — Responsive design, a11y, error handling, tests, deployment, documentation
+
+- **tailwind-migration/ (Phased Plan — Tailwind CSS)**: Complete phased migration plan from Bootstrap/react-bootstrap to **Tailwind CSS v4 + Headless UI v2**. Includes full component audit, design tokens, UI improvement principles, and phase-by-phase instructions for AI agent execution.
+  - `plans/tailwind-migration/00-plan-tailwind-migration.md` — Full plan: analysis, 7 phases (0–6), design system, QA guidelines, risk mitigation
 
 See also: `docs/action-plan.md`, `docs/plan-api-symfony.md`, `docs/plan-migracion-react.md`.
 

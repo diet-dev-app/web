@@ -287,11 +287,12 @@ app.put('/api/meals/:id', requireAuth, (req, res) => {
     return res.status(404).json({ error: 'Meal not found' });
   }
 
-  const { name, calories, date, notes } = req.body || {};
-  if (name    !== undefined) meals[idx].name     = name;
-  if (calories !== undefined) meals[idx].calories = calories;
-  if (date    !== undefined) meals[idx].date     = `${date}T00:00:00+00:00`;
-  if (notes   !== undefined) meals[idx].notes    = notes;
+  const { name, calories, date, notes, meal_option_ids } = req.body || {};
+  if (name             !== undefined) meals[idx].name       = name;
+  if (calories         !== undefined) meals[idx].calories   = calories;
+  if (date             !== undefined) meals[idx].date       = `${date}T00:00:00+00:00`;
+  if (notes            !== undefined) meals[idx].notes      = notes;
+  if (meal_option_ids  !== undefined) meals[idx].meal_times = buildMealTimes(meal_option_ids);
 
   log('PUT', `/api/meals/${id}`, 200);
   const { meal_times: _mt, ...simple } = meals[idx];

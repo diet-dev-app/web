@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Badge } from 'react-bootstrap';
 import { useOptionsManager } from './useMealOptions';
 import OptionEditModal from './OptionEditModal';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Alert from '@/components/Alert/Alert';
 import { MEAL_TIMES } from '@/utils/constants';
 import type { MealOption } from '@/types';
-import styles from './OptionsList.module.css';
 
 /**
  * CRUD view for managing meal options (templates).
@@ -54,89 +52,120 @@ export default function OptionsList() {
 
   if (loading && filteredOptions.length === 0) {
     return (
-      <div className="text-center py-5">
-        <span className="spinner-border" role="status" />
-        <p className="mt-2">Cargando opciones...</p>
+      <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+        <svg className="animate-spin w-8 h-8 text-green-600 mb-3" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+        <p className="text-sm">Cargando opciones...</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.optionsList}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3>⚙️ Opciones de comida</h3>
-        <Button variant="primary" onClick={startCreate}>
+    <div className="max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-semibold text-slate-900">⚙️ Opciones de comida</h3>
+        <button
+          type="button"
+          onClick={startCreate}
+          className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+        >
           + Nueva opción
-        </Button>
+        </button>
       </div>
 
       {alert && (
-        <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
+        <div className="mb-4">
+          <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
+        </div>
       )}
 
-      {error && <Alert type="danger" message={error} />}
+      {error && (
+        <div className="mb-4">
+          <Alert type="danger" message={error} />
+        </div>
+      )}
 
       {/* Filter tabs */}
-      <div className="d-flex flex-wrap gap-2 mb-4">
-        <Button
-          variant={selectedMealTime === null ? 'primary' : 'outline-primary'}
-          size="sm"
+      <div className="flex flex-wrap gap-2 mb-6">
+        <button
+          type="button"
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            selectedMealTime === null
+              ? 'bg-green-600 text-white'
+              : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+          }`}
           onClick={() => setSelectedMealTime(null)}
         >
           Todas
-        </Button>
+        </button>
         {MEAL_TIMES.map(({ key, label }) => (
-          <Button
+          <button
             key={key}
-            variant={selectedMealTime === key ? 'primary' : 'outline-primary'}
-            size="sm"
+            type="button"
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              selectedMealTime === key
+                ? 'bg-green-600 text-white'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
             onClick={() => setSelectedMealTime(key)}
           >
             {label}
-          </Button>
+          </button>
         ))}
       </div>
 
-      {/* Options list */}
+      {/* Options grid */}
       {filteredOptions.length === 0 ? (
-        <p className="text-muted text-center py-3">No hay opciones para mostrar.</p>
+        <p className="text-center text-slate-400 py-8">No hay opciones para mostrar.</p>
       ) : (
-        <div className="row">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredOptions.map((option) => (
-            <div key={option.id} className="col-md-6 col-lg-4 mb-3">
-              <div className="card h-100">
-                <div className="card-body">
-                  <h6 className="card-title">{option.name}</h6>
-                  {option.description && (
-                    <p className="card-text text-muted small">{option.description}</p>
-                  )}
-                  <div className="d-flex flex-wrap gap-1 mb-2">
-                    <Badge bg="info">{option.meal_time.label}</Badge>
-                    {option.estimated_calories && (
-                      <Badge bg="secondary">{option.estimated_calories} kcal</Badge>
-                    )}
-                  </div>
-                  {option.ingredients.length > 0 && (
-                    <div className="small text-muted">
-                      <strong>Ingredientes:</strong>{' '}
-                      {option.ingredients
-                        .map((ing) => `${ing.name} (${ing.quantity}${ing.unit})`)
-                        .join(', ')}
-                    </div>
+            <div
+              key={option.id}
+              className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col"
+            >
+              <div className="p-4 flex-1">
+                <h6 className="font-semibold text-slate-900 mb-1">{option.name}</h6>
+                {option.description && (
+                  <p className="text-slate-500 text-xs mb-2">{option.description}</p>
+                )}
+                <div className="flex flex-wrap gap-1 mb-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                    {option.meal_time.label}
+                  </span>
+                  {option.estimated_calories && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                      {option.estimated_calories} kcal
+                    </span>
                   )}
                 </div>
-                <div className="card-footer d-flex gap-2">
-                  <Button variant="outline-primary" size="sm" onClick={() => startEdit(option)}>
-                    ✏️ Editar
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => setDeleteTarget(option)}
-                  >
-                    🗑️ Eliminar
-                  </Button>
-                </div>
+                {option.ingredients.length > 0 && (
+                  <p className="text-xs text-slate-400">
+                    <span className="font-medium">Ingredientes:</span>{' '}
+                    {option.ingredients
+                      .map((ing) => `${ing.name} (${ing.quantity}${ing.unit})`)
+                      .join(', ')}
+                  </p>
+                )}
+              </div>
+              <div className="px-4 py-3 border-t border-slate-100 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => startEdit(option)}
+                  className="flex-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                >
+                  ✏️ Editar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(option)}
+                  className="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-600 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                >
+                  🗑️ Eliminar
+                </button>
               </div>
             </div>
           ))}

@@ -12,15 +12,20 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "mock-api": "node mock-api/server.js"
+    "mock-api": "node mock-api/server.js",
+    "api:sync": "rsync -a --delete ../api/openapi/ docs/openapi/",
+    "api:bundle": "npx @redocly/cli bundle docs/openapi/openapi.yaml -o docs/openapi.yaml",
+    "api:update": "npm run api:sync && npm run api:bundle"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@heroicons/react": "^2.2.0",
+    "@tailwindcss/vite": "^4.2.1",
     "axios": "^1.6.8",
-    "bootstrap": "^5.3.3",
     "react": "^18.3.1",
-    "react-bootstrap": "^2.10.2",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.22.3"
+    "react-router-dom": "^6.22.3",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",

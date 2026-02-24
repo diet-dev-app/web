@@ -32,6 +32,8 @@ export interface MealUpdateRequest {
   calories?: number;
   date?: string;
   notes?: string | null;
+  /** Full replacement of the meal's attached MealOption IDs */
+  meal_option_ids?: number[];
 }
 
 // ── Meal Options ────────────────────────────────────────────────
