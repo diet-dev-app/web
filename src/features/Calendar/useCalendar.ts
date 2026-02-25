@@ -9,6 +9,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   meal: Meal | null;       // The meal entry for this day (if any)
   mealCount: number;       // Total meal options assigned to this day
+  totalCalories: number;  // Sum of estimated_calories for all options this day
 }
 
 interface CalendarState {
@@ -54,6 +55,14 @@ export function useCalendar(meals: Meal[]): CalendarState {
       0
     );
 
+  // Sum estimated_calories for all options in a meal
+  const calcTotalCalories = (meal: Meal): number =>
+    meal.meal_times.reduce(
+      (sum: number, mt: MealTimeWithOptions) =>
+        sum + mt.options.reduce((s, o) => s + (o.estimated_calories ?? 0), 0),
+      0
+    );
+
   const days = useMemo((): CalendarDay[] => {
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
@@ -69,6 +78,7 @@ export function useCalendar(meals: Meal[]): CalendarState {
         isCurrentMonth: false,
         meal: null,
         mealCount: 0,
+        totalCalories: 0,
       });
     }
 
@@ -83,6 +93,7 @@ export function useCalendar(meals: Meal[]): CalendarState {
         isCurrentMonth: true,
         meal,
         mealCount: meal ? countOptions(meal) : 0,
+        totalCalories: meal ? calcTotalCalories(meal) : 0,
       });
     }
 

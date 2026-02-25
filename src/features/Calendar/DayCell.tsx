@@ -4,6 +4,7 @@ interface DayCellDay {
   isToday: boolean;
   isCurrentMonth: boolean;
   mealCount: number;
+  totalCalories: number;
 }
 
 interface DayCellProps {
@@ -49,6 +50,11 @@ export default function DayCell({ day, onClick, onGenerate }: DayCellProps) {
       {day.mealCount > 0 && (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-600 text-white">
           {day.mealCount}
+        </span>
+      )}
+      {day.totalCalories > 0 && (
+        <span className="text-[10px] font-medium text-slate-500 leading-none">
+          {day.totalCalories} kcal
         </span>
       )}
       {/* AI generate shortcut — visible on hover */}

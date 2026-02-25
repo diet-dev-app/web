@@ -94,6 +94,15 @@ export default function DayModal({ show, date, onClose }: DayModalProps) {
     }
   };
 
+  // Sum all estimated_calories from all options in this day
+  const totalCalories = useMemo(() => {
+    if (!meal) return 0;
+    return meal.meal_times.reduce(
+      (sum, mt) => sum + mt.options.reduce((s, o) => s + (o.estimated_calories ?? 0), 0),
+      0
+    );
+  }, [meal]);
+
   // Format display date
   const displayDate = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', {
     weekday: 'long',
@@ -170,7 +179,13 @@ export default function DayModal({ show, date, onClose }: DayModalProps) {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 flex justify-end">
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-500">Total del día:</span>
+                <span className="text-sm font-semibold text-green-700">
+                  {totalCalories > 0 ? `${totalCalories} kcal` : '—'}
+                </span>
+              </div>
               <button
                 type="button"
                 className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors"

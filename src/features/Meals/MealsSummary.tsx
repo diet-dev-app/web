@@ -1,18 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMeals } from '@/context/MealContext';
 import { useMealsSummary } from './useMeals';
+import IngredientsList from '@/components/IngredientsList/IngredientsList';
 
 /**
  * Displays an overview of all meal options used across all dates,
- * grouped by meal time with usage counts.
+ * grouped by meal time with usage counts and expandable ingredient details.
  */
 export default function MealsSummary() {
   const { meals, loading, error, fetchMeals } = useMeals();
   const summary = useMealsSummary(meals);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchMeals();
   }, [fetchMeals]);
+
+  const toggleExpand = (id: number) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   if (loading) {
     return (
@@ -57,22 +63,55 @@ export default function MealsSummary() {
               {mealTime.options.length === 0 ? (
                 <p className="px-4 py-3 text-sm text-slate-400 italic">Sin opciones utilizadas.</p>
               ) : (
-                mealTime.options.map((opt) => (
-                  <div
-                    key={opt.id}
-                    className="flex items-center justify-between px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{opt.name}</p>
-                      {opt.description && (
-                        <p className="text-xs text-slate-500">{opt.description}</p>
+                mealTime.options.map((opt) => {
+                  const isExpanded = expandedId === opt.id;
+                  return (
+                    <div key={opt.id}>
+                      {/* Option row */}
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                        onClick={() => toggleExpand(opt.id)}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? `Ocultar ingredientes de ${opt.name}` : `Ver ingredientes de ${opt.name}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{opt.name}</p>
+                          {opt.description && (
+                            <p className="text-xs text-slate-500 truncate">{opt.description}</p>
+                          )}
+                          {opt.estimated_calories != null && (
+                            <p className="text-xs text-green-700 font-medium">{opt.estimated_calories} kcal</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
+                            {opt.count}×
+                          </span>
+                          {/* Expand/collapse chevron */}
+                          <svg
+                            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {/* Ingredient detail panel */}
+                      {isExpanded && (
+                        <div className="px-4 pb-3 bg-slate-50 border-t border-slate-100">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mt-2 mb-1.5">
+                            Ingredientes
+                          </p>
+                          <IngredientsList ingredients={opt.ingredients} />
+                        </div>
                       )}
                     </div>
-                    <span className="ml-3 flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
-                      {opt.count}×
-                    </span>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
