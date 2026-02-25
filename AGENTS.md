@@ -110,3 +110,73 @@ See also: `docs/action-plan.md`, `docs/plan-api-symfony.md`, `docs/plan-migracio
 ---
 
 This document serves as a guide for AI agents and developers to understand, maintain, and improve the project efficiently.
+
+---
+
+## API Reference — Available Endpoints
+
+The backend API spec lives at **`docs/openapi/openapi.yaml`** (split by domain) and the bundled single-file version at **`docs/openapi.yaml`**.
+
+### Quick endpoint map
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Health check |
+| POST | `/api/register` | Register a new user |
+| POST | `/api/login` | Login → returns JWT |
+| GET | `/api/user` | Current user profile |
+| GET | `/api/meals` | List user's meals |
+| POST | `/api/meals` | Create a meal |
+| PUT | `/api/meals/{id}` | Update a meal |
+| DELETE | `/api/meals/{id}` | Delete a meal |
+| POST | `/api/meals/generate` | AI-generate a meal plan for a date |
+| GET | `/api/meal-options` | List all meal options |
+| POST | `/api/meal-options` | Create a meal option |
+| PUT | `/api/meal-options/{id}` | Update a meal option |
+| DELETE | `/api/meal-options/{id}` | Delete a meal option |
+| POST | `/api/meal-options/import` | Import meal options from PDF/DOCX/MD via AI |
+| GET | `/api/shopping-list` | AI-generate shopping list (date range) |
+| GET | `/api/caloric-goals` | List caloric goals |
+| POST | `/api/caloric-goals` | Create a caloric goal |
+| GET | `/api/caloric-goals/active` | Get today's active caloric goal |
+| GET | `/api/caloric-goals/{id}` | Get caloric goal by ID |
+| PUT | `/api/caloric-goals/{id}` | Update a caloric goal |
+| DELETE | `/api/caloric-goals/{id}` | Delete a caloric goal |
+| GET | `/api/reports/weekly` | Get or generate weekly nutritional report |
+| GET | `/api/reports/weekly/history` | List past weekly reports |
+
+### Authentication
+All protected endpoints require `Authorization: Bearer <token>` header.
+Token is obtained via `POST /api/login`.
+
+### Detailed spec files (split by domain)
+All files are under `docs/openapi/`:
+
+- `openapi.yaml` — entry point with all `$ref` declarations
+- `components/schemas/auth.yaml` — RegisterRequest, LoginRequest, LoginResponse
+- `components/schemas/user.yaml` — UserProfile
+- `components/schemas/ingredients.yaml` — Ingredient, IngredientInput
+- `components/schemas/meal-times.yaml` — MealTime
+- `components/schemas/meal-options.yaml` — MealOption, Create/UpdateRequest
+- `components/schemas/meals.yaml` — Meal, MealCreateRequest, MealSimple, ...
+- `components/schemas/shopping-list.yaml` — ShoppingListItem, ShoppingListResponse
+- `components/schemas/file-import.yaml` — FileImportResponse
+- `components/schemas/caloric-goals.yaml` — CaloricGoal, CaloricGoalRequest
+- `components/schemas/meal-generation.yaml` — MealPlanRequest, MealPlanResponse
+- `components/schemas/weekly-reports.yaml` — WeeklyReport, WeeklyReportSummary
+- `components/schemas/common.yaml` — MessageResponse, ErrorResponse
+- `paths/auth.yaml` — `/`, `/api/register`, `/api/login`
+- `paths/user.yaml` — `/api/user`
+- `paths/meals.yaml` — `/api/meals`, `/api/meals/{id}`
+- `paths/meal-options.yaml` — `/api/meal-options`, `/api/meal-options/{id}`, `/api/meal-options/import`
+- `paths/shopping-list.yaml` — `/api/shopping-list`
+- `paths/caloric-goals.yaml` — `/api/caloric-goals`, `/api/caloric-goals/active`, `/api/caloric-goals/{id}`
+- `paths/meal-generation.yaml` — `/api/meals/generate`
+- `paths/weekly-reports.yaml` — `/api/reports/weekly`, `/api/reports/weekly/history`
+
+### Keeping the spec up to date
+When the backend API changes, run from the `web/` folder:
+```bash
+npm run api:update
+```
+This syncs the split files from `../api/openapi/` and regenerates the bundled `docs/openapi.yaml`.

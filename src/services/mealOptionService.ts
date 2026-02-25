@@ -5,6 +5,7 @@ import type {
   MealOptionCreateRequest,
   MealOptionUpdateRequest,
   MessageResponse,
+  FileImportApiResponse,
 } from '@/types';
 
 export const mealOptionService = {
@@ -30,4 +31,17 @@ export const mealOptionService = {
    */
   delete: (id: number) =>
     apiClient.delete<MessageResponse>(`/api/meal-options/${id}`),
+
+  /**
+   * POST /api/meal-options/import — Import meal options from a nutritionist document.
+   * Accepts a multipart/form-data request with a single `file` field.
+   * Supported: PDF, DOCX, Markdown, plain text (max 5 MB).
+   */
+  importFromFile: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return apiClient.post<FileImportApiResponse>('/api/meal-options/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

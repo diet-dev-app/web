@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOptionsManager } from './useMealOptions';
 import OptionEditModal from './OptionEditModal';
+import ImportMealOptionsModal from './ImportMealOptionsModal';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Alert from '@/components/Alert/Alert';
 import { MEAL_TIMES } from '@/utils/constants';
@@ -28,6 +29,7 @@ export default function OptionsList() {
 
   const [deleteTarget, setDeleteTarget] = useState<MealOption | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'danger'; message: string } | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchOptions();
@@ -50,6 +52,12 @@ export default function OptionsList() {
     setAlert({ type: 'success', message: 'Opción guardada correctamente.' });
   };
 
+  const handleImported = () => {
+    fetchOptions();
+    setShowImport(false);
+    setAlert({ type: 'success', message: 'Opciones importadas correctamente.' });
+  };
+
   if (loading && filteredOptions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
@@ -67,13 +75,22 @@ export default function OptionsList() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-2xl font-semibold text-slate-900">⚙️ Opciones de comida</h3>
-        <button
-          type="button"
-          onClick={startCreate}
-          className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-        >
-          + Nueva opción
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="border border-emerald-600 text-emerald-600 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          >
+            📄 Importar
+          </button>
+          <button
+            type="button"
+            onClick={startCreate}
+            className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          >
+            + Nueva opción
+          </button>
+        </div>
       </div>
 
       {alert && (
@@ -191,6 +208,13 @@ export default function OptionsList() {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Import modal */}
+      <ImportMealOptionsModal
+        show={showImport}
+        onClose={() => setShowImport(false)}
+        onImported={handleImported}
       />
     </div>
   );

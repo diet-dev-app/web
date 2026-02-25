@@ -477,6 +477,339 @@ app.get('/api/shopping-list', requireAuth, (req, res) => {
   });
 });
 
+// ── Caloric Goals ─────────────────────────────────────────────────────────────
+
+let caloricGoals = [
+  {
+    id: 1,
+    daily_calories: 1800,
+    start_date: '2026-01-01',
+    end_date: null,
+    label: 'maintenance',
+    notes: 'Baseline maintenance goal',
+    created_at: '2026-01-01T10:00:00+00:00',
+    updated_at: null,
+  },
+];
+let nextGoalId = 2;
+
+// GET /api/caloric-goals/active  (must be before /:id)
+app.get('/api/caloric-goals/active', requireAuth, (req, res) => {
+  const dateStr = req.query.date || new Date().toISOString().slice(0, 10);
+  const check   = new Date(dateStr);
+  const active  = caloricGoals.find((g) => {
+    const start = new Date(g.start_date);
+    const end   = g.end_date ? new Date(g.end_date) : null;
+    return check >= start && (!end || check <= end);
+  });
+  if (!active) {
+    log('GET', '/api/caloric-goals/active', 404);
+    return res.status(404).json({ error: 'No active caloric goal for the given date' });
+  }
+  log('GET', '/api/caloric-goals/active', 200);
+  res.json(active);
+});
+
+// GET /api/caloric-goals
+app.get('/api/caloric-goals', requireAuth, (req, res) => {
+  const sorted = [...caloricGoals].sort(
+    (a, b) => new Date(b.start_date) - new Date(a.start_date),
+  );
+  log('GET', '/api/caloric-goals', 200);
+  res.json(sorted);
+});
+
+// POST /api/caloric-goals
+app.post('/api/caloric-goals', requireAuth, (req, res) => {
+  const { daily_calories, start_date, end_date, label, notes } = req.body || {};
+  if (!daily_calories || !start_date) {
+    log('POST', '/api/caloric-goals', 400);
+    return res.status(400).json({ error: 'daily_calories and start_date are required' });
+  }
+  const newGoal = {
+    id: nextGoalId++,
+    daily_calories: parseInt(daily_calories),
+    start_date,
+    end_date: end_date || null,
+    label: label || null,
+    notes: notes || null,
+    created_at: new Date().toISOString(),
+    updated_at: null,
+  };
+  caloricGoals.push(newGoal);
+  log('POST', '/api/caloric-goals', 201);
+  res.status(201).json(newGoal);
+});
+
+// PUT /api/caloric-goals/:id
+app.put('/api/caloric-goals/:id', requireAuth, (req, res) => {
+  const id  = parseInt(req.params.id);
+  const idx = caloricGoals.findIndex((g) => g.id === id);
+  if (idx === -1) {
+    log('PUT', `/api/caloric-goals/${id}`, 404);
+    return res.status(404).json({ error: 'Caloric goal not found' });
+  }
+  const { daily_calories, start_date, end_date, label, notes } = req.body || {};
+  if (daily_calories !== undefined) caloricGoals[idx].daily_calories = parseInt(daily_calories);
+  if (start_date     !== undefined) caloricGoals[idx].start_date     = start_date;
+  if (end_date       !== undefined) caloricGoals[idx].end_date       = end_date;
+  if (label          !== undefined) caloricGoals[idx].label          = label;
+  if (notes          !== undefined) caloricGoals[idx].notes          = notes;
+  caloricGoals[idx].updated_at = new Date().toISOString();
+  log('PUT', `/api/caloric-goals/${id}`, 200);
+  res.json(caloricGoals[idx]);
+});
+
+// DELETE /api/caloric-goals/:id
+app.delete('/api/caloric-goals/:id', requireAuth, (req, res) => {
+  const id  = parseInt(req.params.id);
+  const idx = caloricGoals.findIndex((g) => g.id === id);
+  if (idx === -1) {
+    log('DELETE', `/api/caloric-goals/${id}`, 404);
+    return res.status(404).json({ error: 'Caloric goal not found' });
+  }
+  caloricGoals.splice(idx, 1);
+  log('DELETE', `/api/caloric-goals/${id}`, 200);
+  res.json({ message: 'Caloric goal deleted' });
+});
+
+// ── Meal Generation ───────────────────────────────────────────────────────────
+
+// POST /api/meals/generate
+app.post('/api/meals/generate', requireAuth, (req, res) => {
+  const { date, target_calories } = req.body || {};
+  const save = req.query.save === 'true';
+
+  if (!date) {
+    log('POST', '/api/meals/generate', 400);
+    return res.status(400).json({ error: 'date is required' });
+  }
+
+  const targetCal = target_calories || caloricGoals[0]?.daily_calories || 2000;
+
+  // Build a deterministic mock plan from existing meal options
+  const breakfast = mealOptions.find((o) => o.meal_time.name === 'breakfast') || mealOptions[0];
+  const lunch     = mealOptions.find((o) => o.meal_time.name === 'lunch')     || mealOptions[1];
+  const snack     = mealOptions.find((o) => o.meal_time.name === 'snack')     || mealOptions[2];
+  const dinner    = mealOptions.find((o) => o.meal_time.name === 'dinner')    || mealOptions[3];
+
+  const planMeals = [breakfast, lunch, snack, dinner].filter(Boolean);
+  const totalCal  = planMeals.reduce((s, o) => s + (o.estimated_calories || 0), 0);
+
+  const planItems = planMeals.map((o) => ({
+    meal_time:          o.meal_time.name,
+    meal_option_id:     o.id,
+    meal_option_name:   o.name,
+    estimated_calories: o.estimated_calories || 0,
+    reason:             `Good ${o.meal_time.name} option within the calorie budget`,
+  }));
+
+  let savedMeal = null;
+  if (save) {
+    const newMeal = {
+      id:         nextMealId++,
+      name:       `AI Plan – ${date}`,
+      calories:   totalCal,
+      date:       `${date}T00:00:00+00:00`,
+      notes:      'Generated by AI',
+      meal_times: buildMealTimes(planMeals.map((o) => o.id)),
+    };
+    meals.push(newMeal);
+    savedMeal = { id: newMeal.id, name: newMeal.name, date };
+  }
+
+  log('POST', '/api/meals/generate', 201);
+  res.status(201).json({
+    date,
+    target_calories: targetCal,
+    total_calories:  totalCal,
+    difference:      totalCal - targetCal,
+    meals:           planItems,
+    notes:           'Balanced plan based on your current meal options.',
+    saved_meal:      savedMeal,
+  });
+});
+
+// ── Meal Options Import ───────────────────────────────────────────────────────
+
+// POST /api/meal-options/import  (multipart/form-data — mock ignores actual file)
+app.post('/api/meal-options/import', requireAuth, (req, res) => {
+  // In the mock we simply create 2 sample imported options
+  const imported = [
+    {
+      name:               'Nutritionist Omelette',
+      description:        'Imported from nutrition doc',
+      estimated_calories: 350,
+      meal_time_id:       1,
+      ingredients:        [
+        { name: 'Eggs', quantity: 3, unit: 'unit' },
+        { name: 'Spinach', quantity: 50, unit: 'g' },
+        { name: 'Feta cheese', quantity: 30, unit: 'g' },
+      ],
+    },
+    {
+      name:               'Nutritionist Salad Bowl',
+      description:        'Imported from nutrition doc',
+      estimated_calories: 290,
+      meal_time_id:       2,
+      ingredients:        [
+        { name: 'Mixed greens', quantity: 100, unit: 'g' },
+        { name: 'Cherry tomatoes', quantity: 80, unit: 'g' },
+        { name: 'Grilled chicken', quantity: 100, unit: 'g' },
+        { name: 'Olive oil', quantity: 15, unit: 'ml' },
+      ],
+    },
+  ];
+
+  const createdOptions = imported.map((opt) => {
+    const mealTime = MEAL_TIMES.find((mt) => mt.id === opt.meal_time_id) || MEAL_TIMES[0];
+    const newOpt = {
+      id:                 nextOptionId++,
+      name:               opt.name,
+      description:        opt.description,
+      estimated_calories: opt.estimated_calories,
+      meal_time:          mealTime,
+      ingredients:        opt.ingredients.map((ing) => ({
+        id:       nextIngredientId++,
+        name:     ing.name,
+        quantity: ing.quantity,
+        unit:     ing.unit,
+      })),
+    };
+    mealOptions.push(newOpt);
+    return newOpt;
+  });
+
+  log('POST', '/api/meal-options/import', 201);
+  res.status(201).json({ imported: createdOptions.length, meal_options: createdOptions });
+});
+
+// ── Weekly Reports ────────────────────────────────────────────────────────────
+
+let weeklyReports = [];
+let nextReportId  = 1;
+
+/**
+ * Return the Monday of the week containing `date`.
+ * @param {Date} date
+ * @returns {string} YYYY-MM-DD
+ */
+function getMonday(date) {
+  const d   = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function buildWeeklyReport(weekStart, targetCal) {
+  const start = new Date(weekStart);
+  const end   = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+
+  const weekMeals = meals.filter((m) => {
+    const d = new Date(m.date);
+    return d >= start && d <= end;
+  });
+
+  const totalCal   = weekMeals.reduce((s, m) => s + (m.calories || 0), 0);
+  const daysTracked = weekMeals.length;
+  const avgCal     = daysTracked > 0 ? Math.round(totalCal / daysTracked) : 0;
+  const weekTarget = targetCal * 7;
+  const diff       = totalCal - weekTarget;
+
+  return {
+    id:              nextReportId++,
+    week_start:      weekStart,
+    week_end:        end.toISOString().slice(0, 10),
+    target_calories: targetCal,
+    average_calories: avgCal,
+    total_calories:  totalCal,
+    days_tracked:    daysTracked,
+    goal_adherence: {
+      score:            Math.max(0, Math.min(100, 100 - Math.abs(Math.round(diff / weekTarget * 100)))),
+      days_on_target:   Math.min(daysTracked, 4),
+      days_over:        daysTracked > 4 ? daysTracked - 4 : 0,
+      days_under:       daysTracked < 4 ? 4 - daysTracked : 0,
+      days_not_tracked: 7 - daysTracked,
+    },
+    calorie_analysis: {
+      daily_breakdown: weekMeals.map((m) => ({
+        date:     m.date.slice(0, 10),
+        calories: m.calories || 0,
+        target:   targetCal,
+      })),
+      weekly_total:      totalCal,
+      weekly_target:     weekTarget,
+      weekly_difference: diff,
+      average_daily:     avgCal,
+    },
+    nutritional_gaps: [
+      { area: 'Protein', severity: 'low', detail: 'Protein intake looks adequate based on meal selections.' },
+    ],
+    achievements:  ['Tracked meals consistently', 'Hit caloric goal on most days'],
+    notes_analysis: {
+      patterns: ['Higher energy on swim days'],
+      concerns: [],
+      mood_trend: 'positive',
+    },
+    recommendations: [
+      'Consider adding more vegetables to dinner options.',
+      'Try to track every day to improve analysis accuracy.',
+    ],
+    summary:      `You tracked ${daysTracked} out of 7 days this week with an average of ${avgCal} kcal/day (target: ${targetCal} kcal).`,
+    generated_at: new Date().toISOString(),
+  };
+}
+
+// GET /api/reports/weekly/history  (must come before /api/reports/weekly)
+app.get('/api/reports/weekly/history', requireAuth, (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '8'), 52);
+  const history = weeklyReports
+    .slice(-limit)
+    .reverse()
+    .map((r) => ({
+      id:               r.id,
+      week_start:       r.week_start,
+      week_end:         r.week_end,
+      score:            r.goal_adherence.score,
+      average_calories: r.average_calories,
+      days_tracked:     r.days_tracked,
+    }));
+  log('GET', '/api/reports/weekly/history', 200);
+  res.json(history);
+});
+
+// GET /api/reports/weekly
+app.get('/api/reports/weekly', requireAuth, (req, res) => {
+  const weekStart  = req.query.week_start || getMonday(new Date());
+  const regenerate = req.query.regenerate === 'true';
+
+  if (!weekStart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    log('GET', '/api/reports/weekly', 400);
+    return res.status(400).json({ error: 'Invalid week_start format (expected YYYY-MM-DD)' });
+  }
+
+  const existing = weeklyReports.find((r) => r.week_start === weekStart);
+  if (existing && !regenerate) {
+    log('GET', '/api/reports/weekly', 200);
+    return res.json(existing);
+  }
+
+  const targetCal = caloricGoals[0]?.daily_calories || 1800;
+  const report    = buildWeeklyReport(weekStart, targetCal);
+
+  if (existing && regenerate) {
+    const idx = weeklyReports.indexOf(existing);
+    weeklyReports.splice(idx, 1, report);
+  } else {
+    weeklyReports.push(report);
+  }
+
+  log('GET', '/api/reports/weekly', 200);
+  res.json(report);
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Start server
 // ─────────────────────────────────────────────────────────────────────────────

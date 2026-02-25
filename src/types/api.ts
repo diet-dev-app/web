@@ -1,4 +1,16 @@
-import type { MealOption, MealSimple, Meal, User, ShoppingListResponse, IngredientInput } from './models';
+import type {
+  MealOption,
+  MealSimple,
+  Meal,
+  User,
+  ShoppingListResponse,
+  IngredientInput,
+  CaloricGoal,
+  MealPlanResponse,
+  WeeklyReport,
+  WeeklyReportSummary,
+  FileImportResponse,
+} from './models';
 
 // ── Auth ────────────────────────────────────────────────────────
 
@@ -61,6 +73,31 @@ export interface ShoppingListParams {
   end: string;
 }
 
+// ── Caloric Goals ───────────────────────────────────────────────
+
+export interface CaloricGoalRequest {
+  daily_calories: number;
+  start_date: string;
+  end_date?: string | null;
+  label?: string | null;
+  notes?: string | null;
+}
+
+export interface CaloricGoalUpdateRequest {
+  daily_calories?: number;
+  start_date?: string;
+  end_date?: string | null;
+  label?: string | null;
+  notes?: string | null;
+}
+
+// ── Meal Generation ─────────────────────────────────────────────
+
+export interface MealPlanRequest {
+  date: string;
+  target_calories?: number | null;
+}
+
 // ── Generic ─────────────────────────────────────────────────────
 
 export interface MessageResponse {
@@ -84,3 +121,9 @@ export type MealUpdateResponse = MealSimple;
 export type MealOptionListResponse = MealOption[];
 export type MealOptionResponse = MealOption;
 export type ShoppingListApiResponse = ShoppingListResponse;
+export type CaloricGoalListResponse = CaloricGoal[];
+export type CaloricGoalResponse = CaloricGoal;
+export type MealPlanApiResponse = MealPlanResponse;
+export type WeeklyReportResponse = WeeklyReport;
+export type WeeklyReportHistoryResponse = WeeklyReportSummary[];
+export type FileImportApiResponse = FileImportResponse;

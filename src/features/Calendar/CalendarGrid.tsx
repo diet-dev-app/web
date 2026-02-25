@@ -5,6 +5,7 @@ import DayCell from './DayCell';
 
 interface CalendarGridProps {
   onDayClick: (date: string) => void;
+  onGenerateClick?: (date: string) => void;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -13,7 +14,7 @@ const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
  * Monthly calendar grid displaying meals per day.
  * Clicking a day opens the DayModal.
  */
-export default function CalendarGrid({ onDayClick }: CalendarGridProps) {
+export default function CalendarGrid({ onDayClick, onGenerateClick }: CalendarGridProps) {
   const { meals, fetchMeals } = useMeals();
   const { monthLabel, days, goToPrevMonth, goToNextMonth, goToToday } = useCalendar(meals);
 
@@ -67,6 +68,7 @@ export default function CalendarGrid({ onDayClick }: CalendarGridProps) {
             key={day.date || `empty-${idx}`}
             day={day}
             onClick={() => day.isCurrentMonth && onDayClick(day.date)}
+            onGenerate={day.isCurrentMonth && onGenerateClick ? () => onGenerateClick(day.date) : undefined}
           />
         ))}
       </div>
