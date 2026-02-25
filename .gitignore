@@ -1,6 +1,8 @@
 node_modules
 var
-dist
+dist/
 build
 *.log
 *.env
+package-lock.json
+node_modules/
